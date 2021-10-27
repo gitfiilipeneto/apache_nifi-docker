@@ -1,0 +1,64 @@
+version: "3.7"
+services:
+  nifi:
+    image: apache/nifi:1.9.2
+    ports:
+      - target: 8080
+        published: 9090
+        protocol: tcp
+        mode: host
+    environment:
+      - NIFI_WEB_HTTP_HOST=0.0.0.0
+      - NIFI_HOME=/home/nifi
+      - NIFI_LOG_DIR=/home/nifi/logs
+
+    volumes:
+      - nifi_data:/home/nifi
+
+volumes:
+  nifi_data:
+    external: true
+version: "3.7"
+services:
+
+nifi:
+  container_name: nifi
+  image: apache/nifi:1.11.4
+  ports:
+    - target: 8080
+      published: 8080
+      protocol: tcp
+      mode: host
+  restart: always
+  environment:
+    - NIFI_WEB_HTTP_HOST=0.0.0.0
+    - NIFI_JVM_HEAP_INIT=4g
+    - NIFI_JVM_HEAP_MAX=6g
+    - NIFI_VARIABLE_REGISTRY_PROPERTIES=./conf/env.properties
+  volumes:
+    - nifi_data:/opt/nifi/nifi-current/
+    - ./nifi/extensions:/opt/nifi/nifi-current/extensions
+    - ./nifi/conf:/opt/nifi/nifi-current/conf
+
+nifi-registry:
+  container_name: nifi-registry
+  image: apache/nifi-registry:0.7.0
+  ports:
+    - target: 18080
+      published: 18080
+      protocol: tcp
+      mode: host
+  environment:
+    - NIFI_REGISTRY_WEB_HTTP_HOST=0.0.0.0
+    - JVM_OPTS=-Xmx512m -Xms512m -XX:MaxPermSize=1g
+  volumes:
+    - $PWD/registry/providers.xml:/opt/nifi-registry/nifi-registry-current/conf/providers.xml
+    - $PWD/registry/flow-storage:/opt/nifi-registry/nifi-registry-current/flow_storage
+    - $PWD/registry/database:/opt/nifi-registry/nifi-registry-current/database
+volumes:
+  nifi_data:
+    external: true
+networks:
+  default:
+    external:
+      name: nifi-network
